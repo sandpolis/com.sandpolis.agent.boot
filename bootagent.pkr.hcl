@@ -31,4 +31,8 @@ build {
   provisioner "shell" {
     script = "install.sh"
   }
+
+  provisioner "shell" {
+    script = "reduce.sh"
+  }
 }
