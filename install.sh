@@ -1,6 +1,8 @@
 #!/bin/ash
 ## Install Alpine and all boot agent dependencies
 
+set -e
+
 # Skip password configuration
 sed -i 's/passwd/true/g' /sbin/setup-alpine
 
@@ -46,5 +48,27 @@ mount /dev/sda2 /mnt
 (
 	apk add wget
 
-	wget 'https://maven.pkg.github.com/sandpolis/com.sandpolis.agent.micro/com.sandpolis.agent.micro/0.1.0/bootagent-0.1.0' /mnt/usr/bin/bootagent
+	#wget 'https://maven.pkg.github.com/sandpolis/com.sandpolis.agent.micro/com.sandpolis.agent.micro/0.1.0/bootagent-0.1.0' /mnt/usr/bin/bootagent
 )
+
+# Reduce the system to bare minimum
+(
+
+	# Remove package manager
+	rm -rf /mnt/var/cache
+	rm -rf /mnt/etc/apk
+	rm -f /mnt/sbin/apk
+
+	# Remove busybox
+	rm -f /mnt/bin/busybox
+
+	# Remove broken links
+	#find -L / -name . -o -type d -prune -o -type l -exec rm {} +
+)
+
+# Zero out free space so qcow2 clusters can be deallocated
+dd bs=1k count=$(df -k /mnt | tail -1 | awk '{print $4}') if=/dev/zero of=/mnt/zero
+rm -f /mnt/zero
+
+umount /mnt
+sync

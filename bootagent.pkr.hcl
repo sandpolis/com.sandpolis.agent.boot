@@ -32,7 +32,9 @@ build {
     script = "install.sh"
   }
 
-  provisioner "shell" {
-    script = "reduce.sh"
+  post-processor "shell-local" {
+    inline = [
+      "qemu-img convert -f qcow2 -O raw output-bootagent/packer-bootagent output-bootagent/bootagent.img"
+    ]
   }
 }
