@@ -46,7 +46,3 @@ impl BlockSnapshotter<'_> {
 		return Ok(())
 	}
 }
-
-struct FileSnapshotter {
-
-}

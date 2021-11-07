@@ -4,8 +4,11 @@ version = "0.1.0"
 edition = "2018"
 
 [dependencies]
-uefi = {version = "0.12.0", features = ["exts"]}
-uefi-services = "0.9.0"
+uefi = { path = "/home/cilki/workspace/uefi-rs", features = ["exts"]}
+uefi-services = { path = "/home/cilki/workspace/uefi-rs/uefi-services" }
 log = { version = "0.4.11", default-features = false }
 uuid = { version = "0.8", default-features = false }
 anyhow = { version = "1.0", default-features = false}
+smoltcp = { version = "0.7.5", default-features = false, features = ["alloc", "log", "socket-tcp", "proto-ipv4"] }
+serde_json = { version = "1.0", default-features = false, features = ["alloc"] }
+serde = { version = "1.0", default-features = false, features = ["derive"] }
