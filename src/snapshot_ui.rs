@@ -10,7 +10,6 @@
 
 use log::{debug, error};
 use core::fmt::format;
-use std::{thread, time};
 use alloc::vec::Vec;
 
 enum UiBlockState {
@@ -32,25 +31,22 @@ enum UiBlockState {
 }
 
 /// UiBlock is a representation of a filesystem block in the UI.
-struct UiBlock<'a> {
+struct UiBlock {
 
 	/// The current state of this block
 	pub state: UiBlockState,
 
-	/// The block's local window
-	pub win: &'a Window,
-
-	/// The block's Y coordinate in the local window
+	/// The block's global Y coordinate
 	pub y: i32,
 
-	/// The block's X coordinate in the local window
+	/// The block's global X coordinate
 	pub x: i32,
 
 	/// The block's global index
 	pub index: i32,
 }
 
-impl UiBlock<'_> {
+impl UiBlock {
 
 	pub fn refresh(&self) {
 		
@@ -62,51 +58,9 @@ impl UiBlock<'_> {
 			_ => ".",
 		};
 
-		self.win.mvaddstr(self.y, self.x, &ch);
-		self.win.refresh();
+		//self.win.mvaddstr(self.y, self.x, &ch);
+		//self.win.refresh();
 	}
-}
-
-/// The global state of the UI.
-struct UiState<'a> {
-
-	pub dialog_topleft_y: i32,
-	pub dialog_topleft_x: i32,
-	pub dialog_topright_y: i32,
-	pub dialog_topright_x: i32,
-	pub dialog_bottomleft_y: i32,
-	pub dialog_bottomleft_x: i32,
-	pub dialog_bottomright_y: i32,
-	pub dialog_bottomright_x: i32,
-
-	pub terminal_y: i32,
-	pub terminal_x: i32,
-
-	pub blocks_max: i32,
-
-	pub win_stats: Window,
-	pub win_header: Window,
-
-	pub win_blocks_north: Window,
-	pub win_blocks_west: Window,
-	pub win_blocks_east: Window,
-	pub win_blocks_south: Window,
-
-	pub blocks: Vec<UiBlock<'a>>,
-}
-
-impl UiState<'_> {
-	pub const TERM_WIDTH_MIN: i32 = 32;
-	pub const TERM_HEIGHT_MIN: i32 = 16;
-
-	pub const DIALOG_WIDTH: i32 = 89;
-	pub const DIALOG_HEIGHT: i32 = 18;
-
-	pub const HEADER_WIDTH: i32 = 89;
-	pub const HEADER_HEIGHT: i32 = 9;
-
-	pub const STATS_WIDTH: i32 = 89;
-	pub const STATS_HEIGHT: i32 = 9;
 }
 
 fn init_win_header(state: &UiState) {
@@ -121,15 +75,15 @@ fn init_win_header(state: &UiState) {
 // Initialize the stats window and static content
 fn init_win_stats(state: &UiState) {
 
-	state.win_stats.mvaddstr(0, 0, "Creating snapshot of device: /dev/sda1. Please do not interrupt this process.");
+	//state.win_stats.mvaddstr(0, 0, "Creating snapshot of device: /dev/sda1. Please do not interrupt this process.");
 
-	state.win_stats.mvaddstr(2, 0, "Time remaining");
-	state.win_stats.mvaddstr(3, 0, "Network upload");
-	state.win_stats.mvaddstr(4, 0, "Network download");
-	state.win_stats.mvaddstr(5, 0, "Disk Read");
-	state.win_stats.mvaddstr(6, 0, "Disk Write");
+	//state.win_stats.mvaddstr(2, 0, "Time remaining");
+	//state.win_stats.mvaddstr(3, 0, "Network upload");
+	//state.win_stats.mvaddstr(4, 0, "Network download");
+	//state.win_stats.mvaddstr(5, 0, "Disk Read");
+	//state.win_stats.mvaddstr(6, 0, "Disk Write");
 
-	state.win_stats.refresh();
+	//state.win_stats.refresh();
 }
 
 fn update_win_stats(state: &UiState) {
@@ -140,151 +94,112 @@ fn update_win_stats(state: &UiState) {
 	let disk_read = format!("↑ /s");
 	let disk_write = format!("↓ /s");
 
-	state.win_stats.mvaddstr(2, UiState::DIALOG_WIDTH - time_remaining.chars().count() as i32, time_remaining);
-	state.win_stats.mvaddstr(3, UiState::DIALOG_WIDTH - net_upload.chars().count() as i32, net_upload);
-	state.win_stats.mvaddstr(4, UiState::DIALOG_WIDTH - net_download.chars().count() as i32, net_download);
-	state.win_stats.mvaddstr(5, UiState::DIALOG_WIDTH - disk_read.chars().count() as i32, disk_read);
-	state.win_stats.mvaddstr(6, UiState::DIALOG_WIDTH - disk_write.chars().count() as i32, disk_write);
+	//state.win_stats.mvaddstr(2, UiState::DIALOG_WIDTH - time_remaining.chars().count() as i32, time_remaining);
+	//state.win_stats.mvaddstr(3, UiState::DIALOG_WIDTH - net_upload.chars().count() as i32, net_upload);
+	//state.win_stats.mvaddstr(4, UiState::DIALOG_WIDTH - net_download.chars().count() as i32, net_download);
+	//state.win_stats.mvaddstr(5, UiState::DIALOG_WIDTH - disk_read.chars().count() as i32, disk_read);
+	//state.win_stats.mvaddstr(6, UiState::DIALOG_WIDTH - disk_write.chars().count() as i32, disk_write);
 
-	state.win_stats.refresh();
+	//state.win_stats.refresh();
 }
 
-fn init_win_blocks(state: &UiState) {
+pub struct CenterArea {
+	width: u32,
+	height: u32,
 
-	// Prepare an offset which will be used to create a rectangular gap
-	let mut offset = 0;
-	let mut i = -1;
+	top_left_y: u32,
+	top_left_x: u32,
+	top_right_y: u32,
+	top_right_x: u32,
+	bottom_left_y: u32,
+	bottom_left_x: u32,
+	bottom_right_y: u32,
+	bottom_right_x: u32,
 
-	// Allocate blocks
-	while i < 10 {
-		i += 1;
+	disk_read: Textline,
+	disk_write: Textline,
+}
 
-		// Convert block index to absolute coordinates
-		let mut y = (i + offset) / state.terminal_x;
-		let mut x = (i + offset) % state.terminal_x;
+impl CenterArea {
+	pub fn new(screen_width: u32, screen_height: u32) {
 
-		// If we're about to enter the dialog, add offset and retry this iteration
-		if y >= state.dialog_topleft_y && y <= state.dialog_bottomleft_y && x == state.dialog_topleft_x {
-			offset += UiState::DIALOG_WIDTH;
-			i -= 1;
-			continue;
+		// Center area is sized according to screen height
+		let height = screen_height / 4;
+		let width = height * 1.618;
+
+		CenterArea {
+			width: width,
+			height: height,
+
+			top_left_y: (screen_height - height) / 2,
+			top_left_x: (screen_width - width) / 2,
+			top_right_y: (screen_height - height) / 2,
+			top_right_x: (screen_width + width) / 2,
+			bottom_left_y: (screen_height + height) / 2,
+			bottom_left_x: (screen_width - width) / 2,
+			bottom_right_y: (screen_height + height) / 2,
+			bottom_right_x: (screen_width + width) / 2,
+		}
+	}
+}
+
+pub struct SnapshotUI<'a> {
+	ui: &'a MainUI,
+	blocks: Vec<UiBlock>,
+}
+
+impl SnapshotUI<'_> {
+	pub fn new(ui: MainUI) -> SnapshotUI {
+
+		// Compute the center area
+		let center = CenterArea::new(ui.width, ui.height);
+
+		// Allocate blocks
+		let mut blocks = Vec::new();
+
+		// Prepare an offset which will be used to create a rectangular gap
+		let mut offset = 0;
+		let mut i = -1;
+
+		while i < 10 {
+			i += 1;
+
+			// Convert block index to absolute coordinates
+			let mut y = (i + offset) / ui.width;
+			let mut x = (i + offset) % ui.height;
+
+			// If we're about to enter the dialog, add offset and retry this iteration
+			if y >= center.top_left_y && y <= center.bottom_left_y && x == center.top_left_x {
+				offset += center.width;
+				i -= 1;
+				continue;
+			}
+
+			// Create the block
+			blocks.push(UiBlock {
+				state: UiBlockState::Unseen,
+				y: y,
+				x: x,
+				index: i,
+			});
 		}
 
-		// Convert absolute coordinates to relative and determine the window
-		let local_window = 
-			if y < state.dialog_topleft_y {
-				&state.win_blocks_north
-			} else if y >= state.dialog_topleft_y && y <= state.dialog_bottomleft_y && x < state.dialog_topleft_x {
-				y -= state.dialog_topleft_y;
-				&state.win_blocks_west
-			} else if y >= state.dialog_topleft_y && y <= state.dialog_bottomleft_y && x > state.dialog_topright_x {
-				y -= state.dialog_topleft_y;
-				x -= state.dialog_topright_x;
-				&state.win_blocks_east
-			} else {
-				y -= state.dialog_bottomleft_y;
-				&state.win_blocks_south
-			};
-
-		// Create the block
-		let blk = UiBlock {
-			state: UiBlockState::Unseen,
-			win: local_window,
-			y: y,
-			x: x,
-			index: i,
-		};
-		//state.blocks.push(blk);
-	}
-}
-
-/// Show the UI until the user quits.
-pub fn start() {
-
-	debug!("Initializing root window");
-	let root = initscr();
-
-	// Precondition check on terminal size
-	let (term_y, term_x) = root.get_max_yx();
-	debug!("Terminal size: ({} x {})", term_x, term_y);
-	if term_y < UiState::TERM_HEIGHT_MIN || term_x < UiState::TERM_WIDTH_MIN {
-		cleanup();
-		error!("Terminal dimensions too small");
-		std::process::exit(1);
+		SnapshotUI {
+			ui: ui,
+			center: center,
+			blocks: blocks,
+		}
 	}
 
-	if ! has_colors() {
-		cleanup();
-		error!("Terminal does not support colors");
-		std::process::exit(1);
+	pub fn start(&self) {
+
+		for block in state.blocks {
+			block.refresh();
+		}
+
+		// Start UI update loop
+		loop {
+			self.stall(200_000);
+		}
 	}
-
-	start_color();
-	noecho();
-	nonl();
-	raw();
-	cbreak();
-	curs_set(0);
-
-	init_color(COLOR_BLACK, 188, 188, 188);
-
-	let dialog_topleft_y = (term_y - UiState::DIALOG_HEIGHT) / 2;
-	let dialog_topleft_x = (term_x - UiState::DIALOG_WIDTH) / 2;
-	let dialog_topright_y = (term_y - UiState::DIALOG_HEIGHT) / 2;
-	let dialog_topright_x = (term_x + UiState::DIALOG_WIDTH) / 2;
-	let dialog_bottomleft_y = (term_y + UiState::DIALOG_HEIGHT) / 2;
-	let dialog_bottomleft_x = (term_x - UiState::DIALOG_WIDTH) / 2;
-	let dialog_bottomright_y = (term_y + UiState::DIALOG_HEIGHT) / 2;
-	let dialog_bottomright_x = (term_x + UiState::DIALOG_WIDTH) / 2;
-
-	// Initialize UI state
-	let state = UiState {
-		dialog_topleft_y: dialog_topleft_y,
-		dialog_topleft_x: dialog_topleft_x,
-		dialog_topright_y: dialog_topright_y,
-		dialog_topright_x: dialog_topright_x,
-		dialog_bottomleft_y: dialog_bottomleft_y,
-		dialog_bottomleft_x: dialog_bottomleft_x,
-		dialog_bottomright_y: dialog_bottomright_y,
-		dialog_bottomright_x: dialog_bottomright_x,
-
-		terminal_y: term_y,
-		terminal_x: term_x,
-
-		blocks_max: (term_x * term_y) - (UiState::DIALOG_WIDTH * UiState::DIALOG_HEIGHT),
-
-		win_stats: newwin(UiState::STATS_HEIGHT, UiState::STATS_WIDTH, dialog_topleft_y + UiState::HEADER_HEIGHT + 1, dialog_topleft_x),
-		win_header: newwin(UiState::HEADER_HEIGHT, UiState::HEADER_WIDTH, dialog_topleft_y, dialog_topleft_x),
-
-		win_blocks_north: newwin(dialog_topleft_y, term_x, 0, 0),
-		win_blocks_west: newwin(UiState::DIALOG_HEIGHT, dialog_topleft_x - 1, dialog_topleft_y, 0),
-		win_blocks_east: newwin(UiState::DIALOG_HEIGHT, term_x - dialog_topright_x + 1, dialog_topright_y, dialog_topright_x + 1),
-		win_blocks_south: newwin(term_y - dialog_bottomleft_y, term_x, dialog_bottomleft_y - 1, 0),
-
-		blocks: Vec::new(),
-	};
-
-	init_win_header(&state);
-	init_win_stats(&state);
-	init_win_blocks(&state);
-
-	for block in state.blocks {
-		block.refresh();
-	}
-
-	// Start UI update loop
-	loop {
-		thread::sleep(time::Duration::from_millis(200));
-	}
-
-	cleanup();
-}
-
-/// Reset the terminal to its previous state.
-fn cleanup() {
-	nocbreak();
-	noraw();
-	nl();
-	echo();
-	endwin();
 }

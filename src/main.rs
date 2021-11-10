@@ -29,9 +29,21 @@ struct BuildJson {
 const BUILD_DATA: &str = "b215dfd2febd88cee51ef64e864827e959ed2e8e44aaff31dd3bc8153380ab9a894f24511aad3099b31aa5c3ed1137e61361e0f5405a486acc88f97c27ce71476e4afb7aee44456a714e0b5de443ffc1d509680a2b464b30c0ab90509e2aaafe0498201d5792a8757a21d738820c38a6ddd45c50b6afacfc7e3ad5eeed1df6df7591917f68803337a0e57dff30ed9901e4e8a890e4f8c2fcbfcc00d38f23678deb28ca7d342e22570c2e62641b712f77388bbb36dc585756906cc4d4010b6ad0f72a67708891a0f20b9419853eaafcf26f0e914cefbc008342a7d675ebb275a26d0cdcfb2968695b0ac2b7ee40bcaa1c494e96ec53cecadb524c";
 
 #[derive(Deserialize)]
-struct AgentConfig<'a> {
-    mac: &'a str,
-    ip: &'a str,
+struct AgentConfig {
+    
+}
+
+#[derive(Deserialize)]
+struct NetworkConfig {
+    mac: &'static str,
+    ip: &'static str,
+}
+
+#[derive(Deserialize)]
+struct GraphicsConfig {
+    enabled: bool,
+    width: usize,
+    height: usize,
 }
 
 // The 500-byte config placeholder
@@ -106,6 +118,11 @@ fn efi_main(image: Handle, mut st: SystemTable<Boot>) -> Status {
         }
     }
 
+    // Initialize UI if enabled
+    if agent_config.graphics.enabled {
+        MainUI::new(agent_config.graphics.width, agent_config.graphics.height);
+    }
+
     loop {
         // Connection attempt
         if let Ok(connection) = Connection::new(&device) {
@@ -114,8 +131,14 @@ fn efi_main(image: Handle, mut st: SystemTable<Boot>) -> Status {
                 // Message dispatch
                 if let Ok(message) = connection.read() {
 
-                    //match message.type() {
-                    //}
+                    match message.payload_type() {
+                        payload_type!("RQ_CreateSnapshot"): => {
+
+                        },
+                        payload_type!("RQ_ApplySnapshot"): => {
+                            
+                        },
+                    }
                 } else {
                     break;
                 }
@@ -125,6 +148,6 @@ fn efi_main(image: Handle, mut st: SystemTable<Boot>) -> Status {
         // Wait before trying again
         bt.stall(100_000);
     }
-    
+
     rt.reset(ResetType::Shutdown, Status::SUCCESS, None);
 }
