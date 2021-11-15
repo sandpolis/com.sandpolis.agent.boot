@@ -151,3 +151,29 @@ fn efi_main(image: Handle, mut st: SystemTable<Boot>) -> Status {
 
     rt.reset(ResetType::Shutdown, Status::SUCCESS, None);
 }
+
+#[path = "../../gen/rust"]
+pub mod s7s {
+
+    #[path = "core.foundation"]
+    pub mod foundation {
+        pub mod platform;
+    }
+
+    #[path = "core.instance"]
+    pub mod instance {
+        pub mod metatypes;
+        pub mod messages;
+    }
+
+    #[path = "core.net"]
+    pub mod net {
+        pub mod message;
+        pub mod messages;
+    }
+
+    #[path = "plugin.snapshot"]
+    pub mod snapshot {
+        pub mod messages;
+    }
+}
