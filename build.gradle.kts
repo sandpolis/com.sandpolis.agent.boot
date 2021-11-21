@@ -9,8 +9,9 @@
 //============================================================================//
 
 plugins {
-	id("sandpolis-instance")
-	id("sandpolis-publish")
+	id("com.sandpolis.build.module") version "+"
+	id("com.sandpolis.build.instance") version "+"
+	id("com.sandpolis.build.publish") version "+"
 }
 
 dependencies {
@@ -64,7 +65,7 @@ val runAmd64 by tasks.creating(Exec::class) {
 
 	doFirst {
 		copy {
-			from(buildAarch64.outputs.files.getSingleFile())
+			from("target/x86_64-unknown-uefi/release/agent.efi")
 			into("${project.getProjectDir()}/build/esp/EFI/Boot/BootX64.efi")
 		}
 	}
@@ -94,7 +95,7 @@ val runAarch64 by tasks.creating(Exec::class) {
 
 	doFirst {
 		copy {
-			from(buildAarch64.outputs.files.getSingleFile())
+			from("target/aarch64-unknown-uefi/release/agent.efi")
 			into("${project.getProjectDir()}/build/esp/EFI/Boot/BootAA64.efi")
 		}
 	}
@@ -107,11 +108,11 @@ publishing {
 			artifactId = "agent.boot"
 			version = project.version.toString()
 
-			artifact(buildAmd64.outputs.files.filter { it.name == "agent" }.getSingleFile()) {
+			artifact("target/x86_64-unknown-uefi/release/agent.efi") {
 				classifier = "amd64"
 			}
 
-			artifact(buildAarch64.outputs.files.filter { it.name == "agent" }.getSingleFile()) {
+			artifact("target/aarch64-unknown-uefi/release/agent.efi") {
 				classifier = "aarch64"
 			}
 		}
