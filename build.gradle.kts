@@ -9,9 +9,9 @@
 //============================================================================//
 
 plugins {
-	id("com.sandpolis.build.module") version "+"
-	id("com.sandpolis.build.instance") version "+"
-	id("com.sandpolis.build.publish") version "+"
+	id("com.sandpolis.build.module")
+	id("com.sandpolis.build.instance")
+	id("com.sandpolis.build.publish")
 }
 
 dependencies {
