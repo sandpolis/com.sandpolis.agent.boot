@@ -1,24 +1,23 @@
 //============================================================================//
 //                                                                            //
-//                         Copyright © 2015 Sandpolis                         //
+//            Copyright © 2015 - 2022 Sandpolis Software Foundation           //
 //                                                                            //
 //  This source file is subject to the terms of the Mozilla Public License    //
-//  version 2. You may not use this file except in compliance with the MPL    //
-//  as published by the Mozilla Foundation.                                   //
+//  version 2. You may not use this file except in compliance with the MPLv2. //
 //                                                                            //
 //============================================================================//
 
 plugins {
-	id("com.sandpolis.build.module")
-	id("com.sandpolis.build.instance")
-	id("com.sandpolis.build.publish")
+	id("org.s7s.build.module")
+	id("org.s7s.build.instance")
+	id("org.s7s.build.publish")
 }
 
 dependencies {
-	proto("com.sandpolis:core.foundation:+:rust@zip")
-	proto("com.sandpolis:core.instance:+:rust@zip")
-	proto("com.sandpolis:core.net:+:rust@zip")
-	proto("com.sandpolis:plugin.snapshot:+:rust@zip")
+	proto("org.s7s:core.foundation:+:rust@zip")
+	proto("org.s7s:core.instance:+:rust@zip")
+	proto("org.s7s:core.net:+:rust@zip")
+	proto("org.s7s:plugin.snapshot:+:rust@zip")
 }
 
 val buildAmd64 by tasks.creating(Exec::class) {
@@ -104,7 +103,7 @@ val runAarch64 by tasks.creating(Exec::class) {
 publishing {
 	publications {
 		create<MavenPublication>("agent") {
-			groupId = "com.sandpolis"
+			groupId = "org.s7s"
 			artifactId = "agent.boot"
 			version = project.version.toString()
 
